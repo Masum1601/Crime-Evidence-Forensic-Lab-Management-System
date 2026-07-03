@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class User extends Model
+// Extends Authenticatable (not the plain Eloquent Model) so this
+// class works with Laravel's built-in Auth facade — Auth::attempt(),
+// Auth::user(), the 'auth' middleware, etc. all expect this base class.
+class User extends Authenticatable
 {
     protected $table = 'users';
     protected $primaryKey = 'user_id';
-    public $timestamps = false; 
+    public $timestamps = false; // we manage created_at manually via DB default
 
     protected $fillable = [
         'role_id',
