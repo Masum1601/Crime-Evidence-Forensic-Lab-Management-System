@@ -11,59 +11,56 @@ use App\Models\User;
 class ResetAdminPassword extends Command
 {
     protected $signature   = 'admin:reset-password';
-    protected $description = 'Create or reset the admin user with a valid bcrypt password';
+    protected $description = 'Create or reset all demo users (Admin, Officer, Analyst) with valid bcrypt passwords';
+
+    private array $users = [
+        ['role' => 'Admin',   'name' => 'System Admin',  'email' => 'admin@cefl.test',   'password' => 'admin123',   'phone' => '01700000000'],
+        ['role' => 'Officer', 'name' => 'John Officer',  'email' => 'officer@cefl.test', 'password' => 'officer123', 'phone' => '01711111111'],
+        ['role' => 'Analyst', 'name' => 'Sara Analyst',  'email' => 'analyst@cefl.test', 'password' => 'analyst123', 'phone' => '01722222222'],
+    ];
 
     public function handle(): void
     {
-        $email    = 'admin@cefl.test';
-        $password = 'admin123';
+        $rows = [];
 
-        // 1. Ensure the Admin role exists
-        $role = Role::firstOrCreate(['role_name' => 'Admin']);
-        $this->line("Role ID: {$role->role_id}");
+        foreach ($this->users as $u) {
+            // Ensure role exists
+            $role = Role::firstOrCreate(['role_name' => $u['role']]);
 
-        // 2. Generate hash and verify it is bcrypt before saving
-        $hash = Hash::make($password);
-        if (!str_starts_with($hash, '$2y$') && !str_starts_with($hash, '$2b$')) {
-            $this->error('Hash driver is not bcrypt! Check config/hashing.php');
-            return;
+            // Generate & verify bcrypt hash
+            $hash = Hash::make($u['password']);
+            if (!str_starts_with($hash, '$2y$') && !str_starts_with($hash, '$2b$')) {
+                $this->error("Hash driver is not bcrypt! Aborting for {$u['email']}");
+                continue;
+            }
+
+            $exists = DB::table('users')->where('email', $u['email'])->exists();
+
+            if ($exists) {
+                DB::table('users')->where('email', $u['email'])
+                    ->update(['password' => $hash, 'status' => 'ACTIVE', 'role_id' => $role->role_id]);
+                $action = 'Updated';
+            } else {
+                DB::table('users')->insert([
+                    'role_id'   => $role->role_id,
+                    'full_name' => $u['name'],
+                    'email'     => $u['email'],
+                    'password'  => $hash,
+                    'phone'     => $u['phone'],
+                    'status'    => 'ACTIVE',
+                ]);
+                $action = 'Created';
+            }
+
+            // Verify stored hash
+            $stored = DB::table('users')->where('email', $u['email'])->value('password');
+            $ok = Hash::check($u['password'], $stored) ? '✅' : '❌';
+            $rows[] = [$ok, $action, $u['role'], $u['email'], $u['password']];
         }
-        $this->line("Hash preview: " . substr($hash, 0, 7) . '...');
 
-        // 3. Update or create the user using a raw DB update to bypass any
-        //    Eloquent casting / Oracle driver quirks
-        $exists = DB::table('users')->where('email', $email)->exists();
-
-        if ($exists) {
-            DB::table('users')
-                ->where('email', $email)
-                ->update(['password' => $hash, 'status' => 'ACTIVE']);
-            $this->info("✅ Password updated for existing user: {$email}");
-        } else {
-            DB::table('users')->insert([
-                'role_id'   => $role->role_id,
-                'full_name' => 'Admin',
-                'email'     => $email,
-                'password'  => $hash,
-                'phone'     => '01700000000',
-                'status'    => 'ACTIVE',
-            ]);
-            $this->info("✅ Admin user created: {$email}");
-        }
-
-        // 4. Read back the stored hash and verify it
-        $stored = DB::table('users')->where('email', $email)->value('password');
-        $this->line("Stored hash preview: " . substr($stored, 0, 7) . '...');
-
-        if (Hash::check($password, $stored)) {
-            $this->info("✅ Hash verification passed — you can now log in.");
-            $this->newLine();
-            $this->table(['Field', 'Value'], [
-                ['Email',    $email],
-                ['Password', $password],
-            ]);
-        } else {
-            $this->error('❌ Hash verification FAILED — something went wrong with storage.');
-        }
+        $this->newLine();
+        $this->table(['', 'Action', 'Role', 'Email', 'Password'], $rows);
+        $this->newLine();
+        $this->info('All demo users are ready. Use the credentials above to log in.');
     }
 }
