@@ -133,7 +133,7 @@
             <i class="bi bi-shield-lock-fill" style="color:#6366f1;margin-right:0.4rem;"></i>CEFL System
         </div>
         <div style="display:flex;gap:0.75rem;">
-            <a href="{{ route('public.submit') }}" style="color:var(--link-muted);text-decoration:none;font-size:0.875rem;font-weight:600;padding:0.4rem 0.75rem;">Submit a Tip</a>
+            <a href="{{ auth()->check() ? route('public.submit') : route('register') }}" style="color:#94a3b8;...">Submit a Tip</a>
             <a href="{{ route('login') }}" style="background:linear-gradient(135deg,#6366f1,#3b82f6);color:#fff;text-decoration:none;padding:0.4rem 1rem;border-radius:8px;font-weight:600;font-size:0.875rem;">Staff Login</a>
         </div>
     </nav>

@@ -31,4 +31,9 @@ class PublicSubmission extends Model
     {
         return $this->belongsTo(User::class, 'reviewed_by', 'user_id');
     }
+
+    public function submittedByUser()
+    {
+        return $this->belongsTo(User::class, 'submitted_by', 'user_id');
+    }
 }

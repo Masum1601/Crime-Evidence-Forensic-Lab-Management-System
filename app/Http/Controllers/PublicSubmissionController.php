@@ -9,35 +9,43 @@ use Illuminate\Support\Facades\Auth;
 
 class PublicSubmissionController extends Controller
 {
-    // GET /submit — public form (no login needed)
+    // GET /submit — now requires login (route already behind 'auth' middleware)
     public function create()
     {
         $cases = CaseModel::where('case_status', 'OPEN')->get();
         return view('public.submit', compact('cases'));
     }
 
-    // POST /submit — store submission (no login needed)
+    // POST /submit
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'submitter_name'  => 'required|string|max:100',
-            'submitter_email' => 'nullable|email|max:100',
-            'submitter_phone' => 'nullable|string|max:20',
             'subject'         => 'required|string|max:200',
             'description'     => 'required|string|max:2000',
             'related_case_id' => 'nullable|exists:cases,case_id',
         ]);
 
-        PublicSubmission::create($validated);
+        $user = Auth::user();
+
+        PublicSubmission::create([
+            'submitter_name'  => $user->full_name,
+            'submitter_email' => $user->email,
+            'submitter_phone' => $user->phone,
+            'subject'         => $validated['subject'],
+            'description'     => $validated['description'],
+            'related_case_id' => $validated['related_case_id'] ?? null,
+            'submitted_by'    => $user->user_id,
+            'status'          => 'PENDING',
+        ]);
 
         return redirect()->route('public.submit')->with('success',
-            'Your submission has been received. Thank you for your information.');
+            'Your submission has been received and linked to your account. Thank you.');
     }
 
-    // GET /admin/submissions — admin view of all submissions
+    // GET /admin/submissions
     public function index(Request $request)
     {
-        $query = PublicSubmission::with(['relatedCase', 'reviewer']);
+        $query = PublicSubmission::with(['relatedCase', 'reviewer', 'submittedByUser']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -47,7 +55,7 @@ class PublicSubmissionController extends Controller
         return view('admin.submissions.index', compact('submissions'));
     }
 
-    // POST /admin/submissions/{id}/review — mark as reviewed
+    // POST /admin/submissions/{id}/review
     public function review(Request $request, PublicSubmission $submission)
     {
         $validated = $request->validate([

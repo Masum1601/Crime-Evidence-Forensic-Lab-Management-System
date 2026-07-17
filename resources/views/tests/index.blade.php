@@ -40,19 +40,27 @@
                         </td>
                         <td>{{ $req->requestedBy->full_name ?? 'N/A' }}</td>
                         <td>
-                            @if($req->test_status !== 'COMPLETED')
-                                <form action="{{ route('tests.update', $req->request_id) }}" method="POST" class="d-flex gap-1">
-                                    @csrf @method('PUT')
-                                    <select name="test_status" class="form-select form-select-sm" style="width:130px;">
-                                        @foreach(['PENDING','IN_PROGRESS','COMPLETED','CANCELLED'] as $s)
-                                            <option value="{{ $s }}" {{ $req->test_status === $s ? 'selected' : '' }}>{{ $s }}</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="submit" class="btn-icon" title="Update"><i class="bi bi-check-lg"></i></button>
-                                </form>
-                            @else
-                                <span style="font-size:0.78rem;color:var(--text-muted);">Completed</span>
-                            @endif
+                            <div class="d-flex align-items-center gap-1">
+                                @if($req->test_status === 'IN_PROGRESS')
+                                    <a href="{{ route('tests.report.create', $req->request_id) }}" class="btn-icon" title="File Report">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                    </a>
+                                @endif
+
+                                @if($req->test_status !== 'COMPLETED')
+                                    <form action="{{ route('tests.update', $req->request_id) }}" method="POST" class="d-flex gap-1">
+                                        @csrf @method('PUT')
+                                        <select name="test_status" class="form-select form-select-sm" style="width:130px;">
+                                            @foreach(['PENDING','IN_PROGRESS','COMPLETED','CANCELLED'] as $s)
+                                                <option value="{{ $s }}" {{ $req->test_status === $s ? 'selected' : '' }}>{{ $s }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="btn-icon" title="Update"><i class="bi bi-check-lg"></i></button>
+                                    </form>
+                                @else
+                                    <span style="font-size:0.78rem;color:var(--text-muted);">Completed</span>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty

@@ -12,7 +12,8 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with('role')->orderBy('user_id')->get();
-        return view('users.index', compact('users'));
+        $roles = Role::all();
+        return view('users.index', compact('users', 'roles'));
     }
 
    
@@ -74,5 +75,25 @@ class UserController extends Controller
     {
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+    }
+    // POST /users/{id}/toggle-status
+    public function toggleStatus(User $user)
+    {
+        $user->status = $user->status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        $user->save();
+
+        return back()->with('success', 'User status updated.');
+    }
+    // POST /users/{id}/change-role
+    public function changeRole(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'role_id' => 'required|exists:roles,role_id',
+        ]);
+
+        $user->role_id = $validated['role_id'];
+        $user->save();
+
+        return back()->with('success', 'User role updated.');
     }
 }
