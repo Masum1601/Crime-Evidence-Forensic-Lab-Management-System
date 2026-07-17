@@ -176,6 +176,7 @@
     .role-admin   { background: rgba(251,191,36,0.15); color: #fbbf24; }
     .role-officer { background: rgba(99,102,241,0.2);  color: #818cf8; }
     .role-analyst { background: rgba(16,185,129,0.15); color: #34d399; }
+    .role-user    { background: rgba(148,163,184,0.15); color: #94a3b8; }
     .btn-logout {
         width: 100%; padding: 0.4rem 0.75rem;
         border-radius: 8px; font-size: 0.78rem; font-weight: 500;
@@ -224,7 +225,7 @@
         border-radius: 14px;
         overflow: hidden;
     }
-    .card-stat { /* same as card, kept for compatibility */
+    .card-stat {
         background: var(--card-bg);
         border: 1px solid var(--card-border);
         border-radius: 14px;
@@ -441,35 +442,68 @@
         </div>
 
         <div class="sidebar-nav">
+            @php $role = auth()->user()?->role?->role_name ?? 'User'; @endphp
+
             <div class="nav-section">Main</div>
             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
-            <a href="{{ route('cases.index') }}" class="nav-link {{ request()->routeIs('cases.*') ? 'active' : '' }}">
-                <i class="bi bi-folder2-open"></i> Cases
-            </a>
-            <a href="{{ route('evidence.index') }}" class="nav-link {{ request()->routeIs('evidence.*') ? 'active' : '' }}">
-                <i class="bi bi-box-seam"></i> Evidence
-            </a>
-            <a href="{{ route('custody.index') }}" class="nav-link {{ request()->routeIs('custody.*') ? 'active' : '' }}">
-                <i class="bi bi-arrow-left-right"></i> Chain of Custody
-            </a>
-            @if(Route::has('tests.index'))
-            <a href="{{ route('tests.index') }}" class="nav-link {{ request()->routeIs('tests.*') ? 'active' : '' }}">
-                <i class="bi bi-eyedropper"></i> Forensic Tests
+
+            @if(in_array($role, ['Admin', 'Officer', 'Analyst']))
+                <a href="{{ route('cases.index') }}" class="nav-link {{ request()->routeIs('cases.*') ? 'active' : '' }}">
+                    <i class="bi bi-folder2-open"></i> Cases
+                </a>
+                <a href="{{ route('evidence.index') }}" class="nav-link {{ request()->routeIs('evidence.*') ? 'active' : '' }}">
+                    <i class="bi bi-box-seam"></i> Evidence
+                </a>
+                <a href="{{ route('custody.index') }}" class="nav-link {{ request()->routeIs('custody.*') ? 'active' : '' }}">
+                    <i class="bi bi-arrow-left-right"></i> Chain of Custody
+                </a>
+                @if(Route::has('tests.index'))
+                <a href="{{ route('tests.index') }}" class="nav-link {{ request()->routeIs('tests.*') ? 'active' : '' }}">
+                    <i class="bi bi-eyedropper"></i> Forensic Tests
+                </a>
+                @endif
+                @if(Route::has('court.index'))
+                <a href="{{ route('court.index') }}" class="nav-link {{ request()->routeIs('court.*') ? 'active' : '' }}">
+                    <i class="bi bi-building"></i> Court Submissions
+                </a>
+                @endif
+                @if(Route::has('equipment.index'))
+                <a href="{{ route('equipment.index') }}" class="nav-link {{ request()->routeIs('equipment.*') ? 'active' : '' }}">
+                    <i class="bi bi-tools"></i> Equipment
+                </a>
+                @endif
+            @endif
+
+            <div class="nav-section">General</div>
+            @if(Route::has('public.submit'))
+            <a href="{{ route('public.submit') }}" class="nav-link {{ request()->routeIs('public.submit*') ? 'active' : '' }}">
+                <i class="bi bi-send"></i> Submit Information
             </a>
             @endif
 
-            @if(auth()->user()?->role?->role_name === 'Admin')
-            <div class="nav-section">Admin</div>
-            <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                <i class="bi bi-people"></i> Users
-            </a>
-            @if(Route::has('admin.submissions'))
-            <a href="{{ route('admin.submissions') }}" class="nav-link {{ request()->routeIs('admin.submissions*') ? 'active' : '' }}">
-                <i class="bi bi-inbox"></i> Public Submissions
-            </a>
+            @if($role === 'User' && Route::has('role-request.create'))
+                <a href="{{ route('role-request.create') }}" class="nav-link {{ request()->routeIs('role-request.*') ? 'active' : '' }}">
+                    <i class="bi bi-person-badge"></i> Request Staff Access
+                </a>
             @endif
+
+            @if($role === 'Admin')
+                <div class="nav-section">Admin</div>
+                <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                    <i class="bi bi-people"></i> Users
+                </a>
+                @if(Route::has('admin.role-requests'))
+                <a href="{{ route('admin.role-requests') }}" class="nav-link {{ request()->routeIs('admin.role-requests*') ? 'active' : '' }}">
+                    <i class="bi bi-person-check"></i> Role Requests
+                </a>
+                @endif
+                @if(Route::has('admin.submissions'))
+                <a href="{{ route('admin.submissions') }}" class="nav-link {{ request()->routeIs('admin.submissions*') ? 'active' : '' }}">
+                    <i class="bi bi-inbox"></i> Public Submissions
+                </a>
+                @endif
             @endif
         </div>
 

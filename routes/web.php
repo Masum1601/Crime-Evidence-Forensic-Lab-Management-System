@@ -1,7 +1,8 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\RoleRequestController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CaseController;
@@ -11,27 +12,33 @@ use App\Http\Controllers\PublicSubmissionController;
 use App\Http\Controllers\TestRequestController;
 
 // -------------------------------------------------------
-// PUBLIC routes — no login required
+// PUBLIC (no login)
 // -------------------------------------------------------
-Route::get('/', function () {
-    return view('public.landing');
-})->name('home');
+Route::get('/', fn() => view('public.landing'))->name('home');
 
-Route::get('/submit', [PublicSubmissionController::class, 'create'])->name('public.submit');
-Route::post('/submit', [PublicSubmissionController::class, 'store'])->name('public.submit.store');
+Route::get('/register', [RegisterController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register'])->name('register.store');
 
-// -------------------------------------------------------
-// AUTH routes
-// -------------------------------------------------------
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // -------------------------------------------------------
-// AUTHENTICATED routes (all roles)
+// AUTHENTICATED (any role, incl. plain "User")
 // -------------------------------------------------------
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Public submission NOW requires login (prompt 6 will formalize this further)
+    Route::get('/submit', [PublicSubmissionController::class, 'create'])->name('public.submit');
+    Route::post('/submit', [PublicSubmissionController::class, 'store'])->name('public.submit.store');
+
+    // Role request — any plain "User" can ask to become Officer/Analyst
+    Route::get('/role-request', [RoleRequestController::class, 'create'])->name('role-request.create');
+    Route::post('/role-request', [RoleRequestController::class, 'store'])->name('role-request.store');
+
+    // Staff-only features (still visible to Officer/Analyst/Admin — "User" role
+    // simply won't see these links per the dashboard prompt #5)
     Route::resource('cases', CaseController::class);
     Route::resource('evidence', EvidenceController::class);
     Route::get('/custody', [CustodyController::class, 'index'])->name('custody.index');
@@ -42,10 +49,13 @@ Route::middleware('auth')->group(function () {
 });
 
 // -------------------------------------------------------
-// ADMIN only routes
+// ADMIN only
 // -------------------------------------------------------
 Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::resource('users', UserController::class);
     Route::get('/admin/submissions', [PublicSubmissionController::class, 'index'])->name('admin.submissions');
     Route::post('/admin/submissions/{submission}/review', [PublicSubmissionController::class, 'review'])->name('admin.submissions.review');
+
+    Route::get('/admin/role-requests', [RoleRequestController::class, 'index'])->name('admin.role-requests');
+    Route::post('/admin/role-requests/{roleRequest}/decide', [RoleRequestController::class, 'decide'])->name('admin.role-requests.decide');
 });
