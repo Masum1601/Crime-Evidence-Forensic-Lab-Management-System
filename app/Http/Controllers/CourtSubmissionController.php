@@ -11,19 +11,54 @@ class CourtSubmissionController extends Controller
 {
     public function index()
     {
-        $submissions = CourtSubmission::with(['evidence', 'submittedByUser'])
-            ->orderBy('submission_id', 'desc')->paginate(10);
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
+        $query = CourtSubmission::with(['evidence', 'submittedByUser']);
+
+        if ($role === 'Officer') {
+            $query->whereHas('evidence.case', function($q) use ($user) {
+                $q->where('officer_id', $user->user_id);
+            });
+        } elseif ($role === 'Analyst') {
+            $query->whereHas('evidence.testRequests', function($q) use ($user) {
+                $q->where('assigned_analyst_id', $user->user_id);
+            });
+        }
+
+        $submissions = $query->orderBy('submission_id', 'desc')->paginate(10);
         return view('court.index', compact('submissions'));
     }
 
     public function create()
     {
-        $evidenceItems = Evidence::whereIn('current_status', ['IN_STORAGE', 'IN_ANALYSIS'])->get();
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
+        if ($role === 'Analyst') {
+            abort(403, 'Analysts are not authorized to make court submissions.');
+        }
+
+        if ($role === 'Officer') {
+            $evidenceItems = Evidence::whereHas('case', function($q) use ($user) {
+                $q->where('officer_id', $user->user_id);
+            })->whereIn('current_status', ['IN_STORAGE', 'IN_ANALYSIS'])->get();
+        } else {
+            $evidenceItems = Evidence::whereIn('current_status', ['IN_STORAGE', 'IN_ANALYSIS'])->get();
+        }
+
         return view('court.create', compact('evidenceItems'));
     }
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
+        if ($role === 'Analyst') {
+            abort(403, 'Analysts are not authorized to make court submissions.');
+        }
+
         $validated = $request->validate([
             'evidence_id'       => 'required|exists:evidence,evidence_id',
             'court_name'        => 'required|string|max:150',
@@ -31,7 +66,14 @@ class CourtSubmissionController extends Controller
             'remarks'           => 'nullable|string|max:500',
         ]);
 
-        $validated['submitted_by'] = Auth::id();
+        $evidence = Evidence::findOrFail($validated['evidence_id']);
+        if ($role === 'Officer') {
+            if ($evidence->case->officer_id !== $user->user_id) {
+                abort(403, 'You are not authorized to submit this evidence to court.');
+            }
+        }
+
+        $validated['submitted_by'] = $user->user_id;
         CourtSubmission::create($validated);
 
         return redirect()->route('court.index')->with('success', 'Evidence submitted to court and logged.');
@@ -39,6 +81,17 @@ class CourtSubmissionController extends Controller
 
     public function update(Request $request, CourtSubmission $court)
     {
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
+        if ($role === 'Officer') {
+            if ($court->evidence->case->officer_id !== $user->user_id) {
+                abort(403, 'You are not authorized to update this court submission.');
+            }
+        } elseif ($role === 'Analyst') {
+            abort(403, 'Analysts are not authorized to update court submissions.');
+        }
+
         $validated = $request->validate([
             'status'      => 'required|in:SUBMITTED,RETURNED,RETAINED',
             'return_date' => 'nullable|date',

@@ -10,6 +10,9 @@ use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\CustodyController;
 use App\Http\Controllers\PublicSubmissionController;
 use App\Http\Controllers\TestRequestController;
+use App\Http\Controllers\CourtSubmissionController;
+use App\Http\Controllers\TestReportController;
+use App\Http\Controllers\EquipmentController;
 
 // -------------------------------------------------------
 // PUBLIC (no login)

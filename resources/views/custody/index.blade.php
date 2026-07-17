@@ -38,7 +38,7 @@
             @forelse ($records as $record)
             <tr>
                 <td style="font-weight:600">{{ $record->evidence->evidence_name ?? 'N/A' }}</td>
-                <td style="color:var(--text-muted)">{{ $record->fromUser->full_name ?? '<span style="color:#475569;font-style:italic">Initial</span>' }}</td>
+                <td style="color:var(--text-muted)">{!! $record->fromUser ? e($record->fromUser->full_name) : '<span style="font-style:italic">Crime Scene</span>' !!}</td>
                 <td style="color:var(--accent)"><i class="bi bi-arrow-right"></i></td>
                 <td style="font-weight:600">{{ $record->toUser->full_name ?? 'N/A' }}</td>
                 <td style="color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $record->reason }}</td>

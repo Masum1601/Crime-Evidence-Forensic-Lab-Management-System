@@ -17,6 +17,7 @@ class PublicSubmission extends Model
         'subject',
         'description',
         'related_case_id',
+        'submitted_by',
         'status',
         'reviewed_by',
         'review_notes',

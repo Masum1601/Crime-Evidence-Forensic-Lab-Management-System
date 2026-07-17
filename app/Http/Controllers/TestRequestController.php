@@ -13,15 +13,17 @@ class TestRequestController extends Controller
 {
     public function index()
     {
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
         $query = TestRequest::with(['evidence', 'testType', 'requestedBy', 'analyst']);
 
-        // Officers/Analysts only see their own requests
-        $role = Auth::user()->role->role_name ?? '';
-        if ($role !== 'Admin') {
-            $query->where(function($q) {
-                $q->where('requested_by', Auth::id())
-                  ->orWhere('assigned_analyst_id', Auth::id());
+        if ($role === 'Officer') {
+            $query->whereHas('evidence.case', function($q) use ($user) {
+                $q->where('officer_id', $user->user_id);
             });
+        } elseif ($role === 'Analyst') {
+            $query->where('assigned_analyst_id', $user->user_id);
         }
 
         $requests = $query->orderBy('request_id', 'desc')->paginate(10);
@@ -30,7 +32,21 @@ class TestRequestController extends Controller
 
     public function create()
     {
-        $evidenceItems = Evidence::all();
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
+        if ($role === 'Analyst') {
+            abort(403, 'Analysts are not authorized to submit test requests.');
+        }
+
+        if ($role === 'Officer') {
+            $evidenceItems = Evidence::whereHas('case', function($q) use ($user) {
+                $q->where('officer_id', $user->user_id);
+            })->get();
+        } else {
+            $evidenceItems = Evidence::all();
+        }
+
         $testTypes = ForensicTestType::all();
         $analysts = User::whereHas('role', fn($q) => $q->where('role_name', 'Analyst'))->get();
         return view('tests.create', compact('evidenceItems', 'testTypes', 'analysts'));
@@ -38,6 +54,13 @@ class TestRequestController extends Controller
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
+        if ($role === 'Analyst') {
+            abort(403, 'Analysts are not authorized to submit test requests.');
+        }
+
         $validated = $request->validate([
             'evidence_id'         => 'required|exists:evidence,evidence_id',
             'test_type_id'        => 'required|exists:forensic_test_types,test_type_id',
@@ -46,7 +69,14 @@ class TestRequestController extends Controller
             'notes'               => 'nullable|string|max:500',
         ]);
 
-        $validated['requested_by'] = Auth::id();
+        $evidence = Evidence::findOrFail($validated['evidence_id']);
+        if ($role === 'Officer') {
+            if ($evidence->case->officer_id !== $user->user_id) {
+                abort(403, 'You are not authorized to submit test requests for this evidence.');
+            }
+        }
+
+        $validated['requested_by'] = $user->user_id;
         $validated['test_status'] = 'PENDING';
 
         TestRequest::create($validated);
@@ -56,11 +86,30 @@ class TestRequestController extends Controller
 
     public function update(Request $request, TestRequest $test)
     {
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
+        if ($role === 'Officer') {
+            if ($test->evidence->case->officer_id !== $user->user_id) {
+                abort(403, 'You are not authorized to update this test request.');
+            }
+        } elseif ($role === 'Analyst') {
+            if ($test->assigned_analyst_id !== $user->user_id) {
+                abort(403, 'You are not authorized to update this test request.');
+            }
+        }
+
         $validated = $request->validate([
             'test_status'         => 'required|in:PENDING,IN_PROGRESS,COMPLETED,CANCELLED',
             'assigned_analyst_id' => 'nullable|exists:users,user_id',
             'notes'               => 'nullable|string|max:500',
         ]);
+
+        // Analysts cannot reassign the analyst or notes, only status
+        if ($role === 'Analyst') {
+            unset($validated['assigned_analyst_id']);
+            unset($validated['notes']);
+        }
 
         $test->update($validated);
         return back()->with('success', 'Test request updated.');

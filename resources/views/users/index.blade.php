@@ -39,10 +39,14 @@
                             <form action="{{ route('users.toggle-status', $user->user_id) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button class="btn-icon" title="Toggle Active/Inactive">
-                                    <i class="bi bi-power"></i>
+                                    @if ($user->status === 'ACTIVE')
+                                        <i class="bi bi-toggle-on text-success" style="font-size: 1.15rem;"></i>
+                                    @else
+                                        <i class="bi bi-toggle-off text-muted" style="font-size: 1.15rem;"></i>
+                                    @endif
                                 </button>
                             </form>
-                            <a href="{{ route('users.edit', $user->user_id) }}" class="btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <a href="{{ route('users.edit', $user->user_id) }}" class="btn-icon edit" title="Edit"><i class="bi bi-pencil"></i></a>
                             <form action="{{ route('users.destroy', $user->user_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this user?');">
                                 @csrf @method('DELETE')
                                 <button class="btn-icon danger" title="Delete"><i class="bi bi-trash"></i></button>

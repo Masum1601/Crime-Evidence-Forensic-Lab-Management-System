@@ -52,7 +52,7 @@
         --card-bg:       #0f1929;
         --card-border:   #1a2540;
         --text-primary:  #e8edf5;
-        --text-muted:    #5a6a85;
+        --text-muted:    #889bbd;
         --hover-bg:      #131d30;
         --input-bg:      #0a1020;
         --badge-open-bg: rgba(16,185,129,0.15); --badge-open-fg: #34d399;
@@ -262,10 +262,20 @@
     /* ═══════════════════════════════════════
        TABLES
     ═══════════════════════════════════════ */
-    .table { color: var(--text-primary); margin: 0; }
+    .table {
+        color: var(--text-primary) !important;
+        margin: 0;
+        --bs-table-bg: transparent !important;
+        --bs-table-border-color: var(--card-border) !important;
+    }
+    .table > :not(caption) > * > * {
+        background-color: transparent !important;
+        box-shadow: none !important;
+        color: inherit !important;
+    }
     .table thead th {
         font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.07em; color: var(--text-muted);
+        letter-spacing: 0.07em; color: var(--text-muted) !important;
         border-bottom: 1px solid var(--card-border);
         padding: 0.75rem 1rem; background: transparent;
         white-space: nowrap;
@@ -273,11 +283,12 @@
     .table tbody td {
         padding: 0.8rem 1rem; border-color: var(--card-border);
         vertical-align: middle; font-size: 0.83rem;
+        color: var(--text-primary) !important;
     }
-    .table tbody tr { transition: background 0.12s; }
-    .table tbody tr:hover { background: var(--hover-bg); }
-    .table tbody tr:nth-child(even) { background: var(--table-stripe); }
-    .table tbody tr:nth-child(even):hover { background: var(--hover-bg); }
+    .table tbody tr { transition: background 0.12s; color: var(--text-primary) !important; }
+    .table tbody tr:hover { background: var(--hover-bg) !important; }
+    .table tbody tr:nth-child(even) { background: var(--table-stripe) !important; }
+    .table tbody tr:nth-child(even):hover { background: var(--hover-bg) !important; }
 
     /* ═══════════════════════════════════════
        BADGES
@@ -320,7 +331,7 @@
     .btn-outline-secondary:hover { background: var(--hover-bg); color: var(--text-primary); }
 
     /* Icon action buttons */
-    .btn-action {
+    .btn-action, .btn-icon {
         width: 30px; height: 30px; border-radius: 7px;
         display: inline-flex; align-items: center; justify-content: center;
         font-size: 0.8rem; border: 1px solid var(--card-border);
@@ -328,11 +339,10 @@
         transition: all 0.15s; cursor: pointer;
         text-decoration: none;
     }
-    .btn-action:hover        { background: rgba(99,102,241,0.12); color: var(--accent); border-color: var(--accent); }
-    .btn-action.view:hover   { background: rgba(59,130,246,0.12); color: #60a5fa; border-color: #60a5fa; }
-    .btn-action.edit:hover   { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: #f59e0b; }
-    .btn-action.delete:hover { background: rgba(239,68,68,0.12);  color: #f87171; border-color: #ef4444; }
-
+    .btn-action:hover, .btn-icon:hover { background: rgba(99,102,241,0.12); color: var(--accent); border-color: var(--accent); }
+    .btn-action.view:hover, .btn-icon.view:hover { background: rgba(59,130,246,0.12); color: #60a5fa; border-color: #60a5fa; }
+    .btn-action.edit:hover, .btn-icon.edit:hover { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: #f59e0b; }
+    .btn-action.delete:hover, .btn-icon.danger:hover, .btn-icon.delete:hover { background: rgba(239,68,68,0.12);  color: #f87171; border-color: #ef4444; }
     /* ═══════════════════════════════════════
        ALERTS
     ═══════════════════════════════════════ */

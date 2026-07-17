@@ -13,7 +13,20 @@ class CustodyController extends Controller
     // GET /custody — list all custody transfer records
     public function index(Request $request)
     {
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
         $query = CustodyRecord::with(['evidence', 'fromUser', 'toUser', 'transferredByUser']);
+
+        if ($role === 'Officer') {
+            $query->whereHas('evidence.case', function($q) use ($user) {
+                $q->where('officer_id', $user->user_id);
+            });
+        } elseif ($role === 'Analyst') {
+            $query->whereHas('evidence.testRequests', function($q) use ($user) {
+                $q->where('assigned_analyst_id', $user->user_id);
+            });
+        }
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -30,7 +43,21 @@ class CustodyController extends Controller
     // GET /custody/create?evidence_id=5 — show transfer form
     public function create(Request $request)
     {
-        $evidenceItems = Evidence::all();
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
+        if ($role === 'Officer') {
+            $evidenceItems = Evidence::whereHas('case', function($q) use ($user) {
+                $q->where('officer_id', $user->user_id);
+            })->get();
+        } elseif ($role === 'Analyst') {
+            $evidenceItems = Evidence::whereHas('testRequests', function($q) use ($user) {
+                $q->where('assigned_analyst_id', $user->user_id);
+            })->get();
+        } else {
+            $evidenceItems = Evidence::all();
+        }
+
         $users = User::all();
         $selectedEvidenceId = $request->query('evidence_id');
 
@@ -40,6 +67,9 @@ class CustodyController extends Controller
     // POST /custody — record a new transfer
     public function store(Request $request)
     {
+        $user = Auth::user();
+        $role = $user->role->role_name ?? '';
+
         $validated = $request->validate([
             'evidence_id'  => 'required|exists:evidence,evidence_id',
             'from_user_id' => 'nullable|exists:users,user_id',
@@ -48,12 +78,24 @@ class CustodyController extends Controller
             'remarks'      => 'nullable|string|max:500',
         ]);
 
-        $validated['transferred_by'] = Auth::id() ?? $validated['to_user_id'];
+        $evidence = Evidence::findOrFail($validated['evidence_id']);
+
+        if ($role === 'Officer') {
+            if ($evidence->case->officer_id !== $user->user_id) {
+                abort(403, 'You are not authorized to transfer this evidence.');
+            }
+        } elseif ($role === 'Analyst') {
+            $hasAssignedTest = $evidence->testRequests()
+                ->where('assigned_analyst_id', $user->user_id)
+                ->exists();
+            if (!$hasAssignedTest) {
+                abort(403, 'You are not authorized to transfer this evidence.');
+            }
+        }
+
+        $validated['transferred_by'] = $user->user_id ?? $validated['to_user_id'];
 
         CustodyRecord::create($validated);
-
-        // The trg_custody_audit PL/SQL trigger fires automatically
-        // on insert and logs this transfer into AUDIT_LOGS.
 
         return redirect()->route('custody.index')->with('success', 'Custody transfer recorded successfully.');
     }

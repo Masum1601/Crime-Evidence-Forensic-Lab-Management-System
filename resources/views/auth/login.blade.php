@@ -169,6 +169,14 @@
         transition: all 0.15s; z-index: 20;
     }
     .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+    .back-link {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        color: var(--muted); text-decoration: none;
+        font-size: 0.8rem; font-weight: 600;
+        margin-bottom: 0.85rem; transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -181,6 +189,9 @@
     </button>
 
     <div class="login-wrap">
+        <a href="{{ route('home') }}" class="back-link">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
         <div class="login-card">
             <div class="logo-ring"><i class="bi bi-shield-lock-fill"></i></div>
             <div class="login-title">CEFL System</div>
@@ -211,20 +222,9 @@
                 </button>
             </form>
 
-            <div class="demo-box">
-                <div class="demo-title">Demo Accounts</div>
-                <div class="demo-row">
-                    <span class="demo-role" style="color:#fbbf24">Admin</span>
-                    <span class="demo-creds">admin@cefl.test / admin123</span>
-                </div>
-                <div class="demo-row">
-                    <span class="demo-role" style="color:#818cf8">Officer</span>
-                    <span class="demo-creds">officer@cefl.test / officer123</span>
-                </div>
-                <div class="demo-row">
-                    <span class="demo-role" style="color:#34d399">Analyst</span>
-                    <span class="demo-creds">analyst@cefl.test / analyst123</span>
-                </div>
+            <div style="text-align: center; margin-top: 1.25rem; font-size: 0.85rem;">
+                <span style="color: var(--muted);">Don't have an account?</span>
+                <a href="{{ route('register') }}" style="color: var(--accent); font-weight: 600; text-decoration: none;">Register here</a>
             </div>
         </div>
     </div>
