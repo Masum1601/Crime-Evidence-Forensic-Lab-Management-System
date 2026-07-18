@@ -27,7 +27,7 @@ class RegisterController extends Controller
 
         // Every self-registered account starts as the plain "User" role.
         // Officer/Analyst access must be explicitly granted by an Admin.
-        $userRole = Role::where('role_name', 'User')->first();
+        $userRole = Role::firstOrCreate(['role_name' => 'User']);
 
         $user = User::create([
             'role_id'   => $userRole->role_id,

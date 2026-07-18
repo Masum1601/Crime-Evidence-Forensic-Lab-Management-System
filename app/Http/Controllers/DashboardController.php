@@ -24,21 +24,34 @@ class DashboardController extends Controller
             $stats = [
                 'total_users'             => User::count(),
                 'total_cases'             => CaseModel::count(),
+                'open_cases'              => CaseModel::where('case_status', 'OPEN')->count(),
+                'closed_cases'            => CaseModel::where('case_status', 'CLOSED')->count(),
                 'total_evidence'          => Evidence::count(),
-                'pending_role_requests'   => RoleRequest::where('status', 'PENDING')->count(),
-                'pending_submissions'     => PublicSubmission::where('status', 'PENDING')->count(),
+                'evidence_in_storage'     => Evidence::where('current_status', 'IN_STORAGE')->count(),
+                'total_custody_transfers' => CustodyRecord::count(),
             ];
 
-            $recentRoleRequests = RoleRequest::with(['user', 'requestedRole'])
-                ->orderBy('request_id', 'desc')
-                ->limit(5)
-                ->get();
+            $recentCases = CaseModel::with('officer')->orderBy('case_id', 'desc')->limit(5)->get();
+            $recentEvidence = Evidence::with('case')->orderBy('evidence_id', 'desc')->limit(5)->get();
 
-            $recentSubmissions = PublicSubmission::orderBy('submission_id', 'desc')
-                ->limit(5)
-                ->get();
+            $casesByStatus = [
+                'open' => $stats['open_cases'],
+                'closed' => $stats['closed_cases'],
+                'pending' => CaseModel::where('case_status', 'PENDING')->count(),
+            ];
 
-            return view('dashboard.admin', compact('stats', 'recentRoleRequests', 'recentSubmissions'));
+            $evidenceByStatus = [
+                'in_storage'  => $stats['evidence_in_storage'],
+                'in_analysis' => Evidence::where('current_status', 'IN_ANALYSIS')->count(),
+                'in_transit'  => Evidence::where('current_status', 'IN_TRANSIT')->count(),
+                'released'    => Evidence::where('current_status', 'RELEASED')->count(),
+                'disposed'    => Evidence::where('current_status', 'DISPOSED')->count(),
+            ];
+
+            $casesJson = json_encode($casesByStatus);
+            $evidenceJson = json_encode($evidenceByStatus);
+
+            return view('dashboard.index', compact('stats', 'recentCases', 'recentEvidence', 'casesJson', 'evidenceJson'));
         }
 
         if ($role === 'Officer') {

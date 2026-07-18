@@ -5,7 +5,7 @@
 @section('content')
     <h2>Add User</h2>
 
-    <form action="{{ route('users.store') }}" method="POST" class="bg-white p-4 rounded shadow-sm">
+    <form action="{{ route('users.store') }}" method="POST" class="card p-4">
         @csrf
 
         <div class="mb-3">

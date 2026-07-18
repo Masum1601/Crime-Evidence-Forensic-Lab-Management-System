@@ -80,6 +80,169 @@
     </div>
 </div>
 
+{{-- Charts --}}
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5 class="fw-bold mb-3" style="font-size:0.9rem; color:var(--text-primary)"><i class="bi bi-bar-chart-line me-1 text-primary"></i> Cases by Status</h5>
+            <div style="position:relative; height:240px;">
+                <canvas id="casesChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5 class="fw-bold mb-3" style="font-size:0.9rem; color:var(--text-primary)"><i class="bi bi-pie-chart me-1 text-success"></i> Evidence by Current Status</h5>
+            <div style="position:relative; height:240px;">
+                <canvas id="evidenceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const casesData = JSON.parse('{!! $casesJson !!}');
+    const evidenceData = JSON.parse('{!! $evidenceJson !!}');
+    
+    function getChartColors() {
+        const style = getComputedStyle(document.documentElement);
+        return {
+            text: style.getPropertyValue('--text-primary').trim() || '#e8edf5',
+            muted: style.getPropertyValue('--text-muted').trim() || '#889bbd',
+            border: style.getPropertyValue('--card-border').trim() || '#1a2540',
+            accent: style.getPropertyValue('--accent').trim() || '#6366f1'
+        };
+    }
+    
+    let colors = getChartColors();
+    
+    // 1. Cases Status Bar Chart
+    const casesCtx = document.getElementById('casesChart').getContext('2d');
+    const casesChart = new Chart(casesCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Open', 'Closed', 'Pending'],
+            datasets: [{
+                label: 'Cases',
+                data: [casesData.open, casesData.closed, casesData.pending],
+                backgroundColor: [
+                    'rgba(96, 165, 250, 0.45)', // open
+                    'rgba(52, 211, 153, 0.45)', // closed
+                    'rgba(251, 191, 36, 0.45)'  // pending
+                ],
+                borderColor: [
+                    '#3b82f6',
+                    '#10b981',
+                    '#f59e0b'
+                ],
+                borderWidth: 1.5,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 25, 41, 0.95)',
+                    titleColor: '#e8edf5',
+                    bodyColor: '#e8edf5',
+                    borderColor: '#1a2540',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: colors.border, drawOnChartArea: true, drawTicks: false },
+                    ticks: { color: colors.muted, font: { family: 'inherit', size: 11 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: colors.border, drawOnChartArea: true, drawTicks: false },
+                    ticks: { color: colors.muted, stepSize: 1, font: { family: 'inherit', size: 11 } }
+                }
+            }
+        }
+    });
+    
+    // 2. Evidence Status Donut Chart
+    const evidenceCtx = document.getElementById('evidenceChart').getContext('2d');
+    const evidenceChart = new Chart(evidenceCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['In Storage', 'In Analysis', 'In Transit', 'Released', 'Disposed'],
+            datasets: [{
+                data: [
+                    evidenceData.in_storage,
+                    evidenceData.in_analysis,
+                    evidenceData.in_transit,
+                    evidenceData.released,
+                    evidenceData.disposed
+                ],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.45)',
+                    'rgba(139, 92, 246, 0.45)',
+                    'rgba(245, 158, 11, 0.45)',
+                    'rgba(16, 185, 129, 0.45)',
+                    'rgba(239, 68, 68, 0.45)'
+                ],
+                borderColor: [
+                    '#3b82f6',
+                    '#8b5cf6',
+                    '#f59e0b',
+                    '#10b981',
+                    '#ef4444'
+                ],
+                borderWidth: 1.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: colors.text,
+                        font: { family: 'inherit', size: 11 },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 25, 41, 0.95)',
+                    titleColor: '#e8edf5',
+                    bodyColor: '#e8edf5',
+                    borderColor: '#1a2540',
+                    borderWidth: 1
+                }
+            }
+        }
+    });
+    
+    // Theme switch listener
+    window.addEventListener('themechanged', function() {
+        setTimeout(() => {
+            const newColors = getChartColors();
+            
+            // Update Cases Chart
+            casesChart.options.scales.x.grid.color = newColors.border;
+            casesChart.options.scales.x.ticks.color = newColors.muted;
+            casesChart.options.scales.y.grid.color = newColors.border;
+            casesChart.options.scales.y.ticks.color = newColors.muted;
+            casesChart.update();
+            
+            // Update Evidence Chart
+            evidenceChart.options.plugins.legend.labels.color = newColors.text;
+            evidenceChart.update();
+        }, 50);
+    });
+});
+</script>
+
 {{-- Recent Lists --}}
 <div class="row g-3">
     <div class="col-md-6">

@@ -42,4 +42,9 @@ class Evidence extends Model
         return $this->hasMany(CustodyRecord::class, 'evidence_id', 'evidence_id')
             ->orderBy('transfer_date', 'desc');
     }
+
+    public function testRequests()
+    {
+        return $this->hasMany(TestRequest::class, 'evidence_id', 'evidence_id');
+    }
 }

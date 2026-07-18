@@ -10,6 +10,15 @@
     </a>
 </div>
 
+@if ($cases->isEmpty())
+    <x-empty-state 
+        icon="bi-folder2-open" 
+        title="No Cases Found" 
+        message="Establish a case log to begin registering evidence and tracking forensic reports." 
+        actionUrl="{{ route('cases.create') }}" 
+        actionText="Open New Case" 
+    />
+@else
 <div class="card">
     <table class="table mb-0">
         <thead>
@@ -24,7 +33,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($cases as $case)
+            @foreach ($cases as $case)
             @php
                 $cls = match($case->case_status) { 'OPEN'=>'open','CLOSED'=>'closed', default=>'pending' };
             @endphp
@@ -45,13 +54,9 @@
                     </div>
                 </td>
             </tr>
-            @empty
-            <tr><td colspan="7" class="text-center py-5" style="color:var(--text-muted)">
-                <i class="bi bi-folder" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.4"></i>
-                No cases found.
-            </td></tr>
-            @endforelse
+            @endforeach
         </tbody>
     </table>
 </div>
+@endif
 @endsection

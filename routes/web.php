@@ -64,17 +64,29 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::post('/users/{user}/change-role', [UserController::class, 'changeRole'])->name('users.change-role');
 
+    Route::get('/equipment/create', [EquipmentController::class, 'create'])->name('equipment.create');
+    Route::post('/equipment', [EquipmentController::class, 'store'])->name('equipment.store');
+});
+
+// -------------------------------------------------------
+// ADMIN, OFFICER, ANALYST
+// -------------------------------------------------------
+Route::middleware(['auth', 'role:Admin,Officer,Analyst'])->group(function () {
     Route::get('/court', [CourtSubmissionController::class, 'index'])->name('court.index');
     Route::get('/court/create', [CourtSubmissionController::class, 'create'])->name('court.create');
     Route::post('/court', [CourtSubmissionController::class, 'store'])->name('court.store');
     Route::put('/court/{court}', [CourtSubmissionController::class, 'update'])->name('court.update');
 
+    Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
+});
+
+// -------------------------------------------------------
+// ADMIN, ANALYST
+// -------------------------------------------------------
+Route::middleware(['auth', 'role:Admin,Analyst'])->group(function () {
     Route::get('/tests/{test}/report', [TestReportController::class, 'create'])->name('tests.report.create');
     Route::post('/tests/{test}/report', [TestReportController::class, 'store'])->name('tests.report.store');
 
-    Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
-    Route::get('/equipment/create', [EquipmentController::class, 'create'])->name('equipment.create');
-    Route::post('/equipment', [EquipmentController::class, 'store'])->name('equipment.store');
     Route::post('/equipment/{equipment}/use', [EquipmentController::class, 'logUsage'])->name('equipment.use');
     Route::post('/equipment/{equipment}/release', [EquipmentController::class, 'release'])->name('equipment.release');
 });

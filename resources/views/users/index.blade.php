@@ -4,6 +4,15 @@
 @section('page_title', 'User Management')
 
 @section('content')
+    @if ($users->isEmpty())
+        <x-empty-state 
+            icon="bi-people" 
+            title="No Users Registered" 
+            message="Add a user account to grant lab access or staff administration permissions." 
+            actionUrl="{{ route('users.create') }}" 
+            actionText="Add User" 
+        />
+    @else
     <div class="card">
         <table class="table mb-0">
             <thead>
@@ -57,4 +66,5 @@
             </tbody>
         </table>
     </div>
+    @endif
 @endsection

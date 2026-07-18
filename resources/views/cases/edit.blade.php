@@ -5,7 +5,7 @@
 @section('content')
     <h2>Edit Case</h2>
 
-    <form action="{{ route('cases.update', $case->case_id) }}" method="POST" class="bg-white p-4 rounded shadow-sm">
+    <form action="{{ route('cases.update', $case->case_id) }}" method="POST" class="card p-4">
         @csrf
         @method('PUT')
 

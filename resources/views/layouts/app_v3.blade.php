@@ -225,6 +225,12 @@
         border-radius: 14px;
         overflow: hidden;
     }
+    .card-header {
+        background: transparent !important;
+        border-bottom: 1px solid var(--card-border) !important;
+        color: var(--text-primary) !important;
+        padding: 0.85rem 1.25rem;
+    }
     .card-stat {
         background: var(--card-bg);
         border: 1px solid var(--card-border);
@@ -436,6 +442,104 @@
        TRANSITIONS
     ═══════════════════════════════════════ */
     .card, .stat-card, .filter-bar { transition: background 0.3s, border-color 0.3s; }
+
+    /* ═══════════════════════════════════════
+       ANIMATIONS & HOVER EFFECTS
+    ═══════════════════════════════════════ */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .main-content {
+        animation: fadeInUp 0.4s ease-out forwards;
+    }
+    
+    .table tbody tr {
+        opacity: 0;
+        animation: fadeInUp 0.3s ease-out forwards;
+        transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    
+    /* Stagger fade-in animation for table rows */
+    .table tbody tr:nth-child(1) { animation-delay: 0.04s; }
+    .table tbody tr:nth-child(2) { animation-delay: 0.08s; }
+    .table tbody tr:nth-child(3) { animation-delay: 0.12s; }
+    .table tbody tr:nth-child(4) { animation-delay: 0.16s; }
+    .table tbody tr:nth-child(5) { animation-delay: 0.20s; }
+    .table tbody tr:nth-child(n+6) { animation-delay: 0.24s; }
+
+    /* Hover-lift effects */
+    .card {
+        transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.22s;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+        border-color: var(--accent);
+    }
+    
+    /* Table row hover action */
+    .table tbody tr:hover {
+        transform: translateY(-1.5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        background: var(--hover-bg) !important;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Responsive menu styles */
+    .sidebar-toggle-btn {
+        display: none;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1.45rem;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        transition: background-color 0.15s;
+    }
+    .sidebar-toggle-btn:hover {
+        background: var(--hover-bg);
+    }
+    
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 1040;
+    }
+    .sidebar-backdrop.show {
+        display: block;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            position: fixed;
+            left: -255px;
+            top: 0;
+            bottom: 0;
+            z-index: 1050;
+            transition: left 0.3s ease;
+            box-shadow: 5px 0 25px rgba(0, 0, 0, 0.2);
+        }
+        .sidebar.open {
+            left: 0;
+        }
+        .sidebar-toggle-btn {
+            display: inline-block;
+        }
+    }
     </style>
 </head>
 <body>
@@ -539,7 +643,12 @@
     {{-- ══════════════════ MAIN ══════════════════ --}}
     <div class="main-wrap">
         <div class="topbar">
-            <div class="page-title">@yield('page_title', 'Dashboard')</div>
+            <div style="display:flex; align-items:center; gap:0.75rem">
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="page-title">@yield('page_title', 'Dashboard')</div>
+            </div>
             <div class="topbar-actions">
                 <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">
                     <i class="bi bi-moon-fill" id="theme-icon"></i>
@@ -576,8 +685,41 @@ function toggleTheme() {
     html.setAttribute('data-theme', dark ? 'light' : 'dark');
     localStorage.setItem('cefl-theme', dark ? 'light' : 'dark');
     syncThemeIcon();
+    window.dispatchEvent(new Event('themechanged'));
 }
 syncThemeIcon();
+
+// Spinner on form submission
+document.addEventListener('submit', function(e) {
+    const form = e.target;
+    const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+    submitButtons.forEach(button => {
+        setTimeout(() => {
+            button.disabled = true;
+        }, 10);
+        button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="margin-right: 0.5rem; width: 0.9rem; height: 0.9rem; border-width: 0.15em; display: inline-block; vertical-align: middle;"></span> Loading...`;
+    });
+});
+
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.classList.toggle('open');
+    let backdrop = document.querySelector('.sidebar-backdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'sidebar-backdrop';
+        document.body.appendChild(backdrop);
+        backdrop.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('show');
+        });
+    }
+    if (sidebar.classList.contains('open')) {
+        backdrop.classList.add('show');
+    } else {
+        backdrop.classList.remove('show');
+    }
+}
 </script>
 </body>
 </html>

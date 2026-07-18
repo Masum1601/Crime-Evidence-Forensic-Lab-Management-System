@@ -578,6 +578,7 @@
         </div>
     </header>
 
+
     <!-- Operational Activities -->
     <section class="activities" id="activities">
         <div class="section-header">

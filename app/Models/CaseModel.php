@@ -26,4 +26,9 @@ class CaseModel extends Model
     {
         return $this->belongsTo(User::class, 'officer_id', 'user_id');
     }
+
+    public function evidence()
+    {
+        return $this->hasMany(Evidence::class, 'case_id', 'case_id');
+    }
 }

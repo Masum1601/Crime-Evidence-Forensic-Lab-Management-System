@@ -21,6 +21,15 @@
     </div>
 </form>
 
+@if ($records->isEmpty())
+    <x-empty-state 
+        icon="bi-arrow-left-right" 
+        title="No Custody Logs Found" 
+        message="Log custody transfers to establish an audit trail for evidence verification." 
+        actionUrl="{{ auth()->user()->role->role_name !== 'Analyst' ? route('custody.create') : null }}" 
+        actionText="Record Transfer" 
+    />
+@else
 <div class="card">
     <table class="table mb-0">
         <thead>
@@ -35,7 +44,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($records as $record)
+            @foreach ($records as $record)
             <tr>
                 <td style="font-weight:600">{{ $record->evidence->evidence_name ?? 'N/A' }}</td>
                 <td style="color:var(--text-muted)">{!! $record->fromUser ? e($record->fromUser->full_name) : '<span style="font-style:italic">Crime Scene</span>' !!}</td>
@@ -45,15 +54,11 @@
                 <td style="color:var(--text-muted)">{{ $record->transferredByUser->full_name ?? 'N/A' }}</td>
                 <td style="color:var(--text-muted);font-size:0.75rem;white-space:nowrap">{{ $record->transfer_date }}</td>
             </tr>
-            @empty
-            <tr><td colspan="7" class="text-center py-5" style="color:var(--text-muted)">
-                <i class="bi bi-arrow-left-right" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.4"></i>
-                No custody transfers recorded yet.
-            </td></tr>
-            @endforelse
+            @endforeach
         </tbody>
     </table>
 </div>
+@endif
 
 <div class="mt-3">{{ $records->links() }}</div>
 @endsection

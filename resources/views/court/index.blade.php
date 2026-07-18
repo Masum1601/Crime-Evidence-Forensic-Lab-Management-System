@@ -10,6 +10,15 @@
         </a>
     </div>
 
+    @if ($submissions->isEmpty())
+        <x-empty-state 
+            icon="bi-gavel" 
+            title="No Court Submissions" 
+            message="Log legal transmissions and evidence check-outs to the judiciary." 
+            actionUrl="{{ route('court.create') }}" 
+            actionText="Submit to Court" 
+        />
+    @else
     <div class="card">
         <table class="table mb-0">
             <thead>
@@ -23,7 +32,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($submissions as $s)
+                @foreach($submissions as $s)
                     <tr>
                         <td>{{ $s->evidence->evidence_name ?? 'N/A' }}</td>
                         <td>{{ $s->court_name }}</td>
@@ -43,11 +52,10 @@
                             @endif
                         </td>
                     </tr>
-                @empty
-                    <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted);">No court submissions yet.</td></tr>
-                @endforelse
+                @endforeach
             </tbody>
         </table>
     </div>
+    @endif
     <div class="mt-3">{{ $submissions->links() }}</div>
 @endsection

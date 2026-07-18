@@ -31,6 +31,15 @@
 </form>
 
 {{-- Table --}}
+@if ($evidenceItems->isEmpty())
+    <x-empty-state 
+        icon="bi-box-seam" 
+        title="No Evidence Registered" 
+        message="Log your first physical or digital evidence item to track its custody history." 
+        actionUrl="{{ route('evidence.create') }}" 
+        actionText="Register Evidence" 
+    />
+@else
 <div class="card">
     <table class="table mb-0">
         <thead>
@@ -45,7 +54,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse ($evidenceItems as $item)
+            @foreach ($evidenceItems as $item)
             @php
                 $statusMap = ['IN_STORAGE'=>'storage','IN_ANALYSIS'=>'analysis','IN_TRANSIT'=>'transit','RELEASED'=>'released','DISPOSED'=>'disposed'];
                 $cls = $statusMap[$item->current_status] ?? 'closed';
@@ -68,15 +77,11 @@
                     </div>
                 </td>
             </tr>
-            @empty
-            <tr><td colspan="7" class="text-center py-5" style="color:var(--text-muted)">
-                <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.4"></i>
-                No evidence records found.
-            </td></tr>
-            @endforelse
+            @endforeach
         </tbody>
     </table>
 </div>
+@endif
 
 <div class="mt-3">{{ $evidenceItems->links() }}</div>
 @endsection
